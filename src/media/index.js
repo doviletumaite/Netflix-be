@@ -1,6 +1,7 @@
 import express from "express"
 import { getMovies, writeMovies } from "../lib/tools-fs.js"
 import uniqid from "uniqid"
+import createHttpError from "http-errors"
 // http://localhost:3003/movies
 const mediaRouter = express.Router()
 
@@ -17,6 +18,7 @@ mediaRouter.get("/:imdbID", async (req, res, next) => {
     try {
     const movies = await getMovies()
     const movie = movies.find(m => m.id === req.body.imdbID)
+    
     if(movie) {
         res.send(movie)
     }    
@@ -66,12 +68,31 @@ mediaRouter.delete("/:imdbID", async (req, res, next) => {
 
 
 mediaRouter.get("/:imdbID/reviews", async (req, res, next) => {
+    console.log("here")
     try {
         const movies = await getMovies()
-      const movie = movies.find((movie) => movie.id === req.params.imdbID);
+      const movie = movies.find((movie) => movie.imdbID === req.params.imdbID);
+      console.log("movie:", movies)
       if (movie) {
         movie.reviews = movie.reviews || []
         res.send(movie.reviews)
+
+      } else {
+        next(createHttpError(404))
+      }
+    } catch (error) {
+      next(error)
+    }
+  });
+
+  
+mediaRouter.delete("/:imdbID/reviews", async (req, res, next) => {
+    try {
+        const movies = await getMovies()
+      const movie = movies.find((movie) => movie.imdbID === req.params.imdbID);
+      if (movie) {
+        movie.reviews = movie.reviews || []
+        res.status(204).send()
       } else {
         next(createHttpError(404))
       }
